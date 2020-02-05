@@ -19,21 +19,28 @@
   "Pulsar is an implementation of lightweight threads (fibers),
   Go-like channels and Erlang-like actors for the JVM"
   (:refer-clojure :exclude [promise await bean])
-  (:import [java.util.concurrent TimeUnit ExecutionException TimeoutException Future]
-           [co.paralleluniverse.strands Strand Stranded]
-           [co.paralleluniverse.strands SuspendableCallable]
-           [co.paralleluniverse.fibers DefaultFiberScheduler FiberScheduler Fiber Joinable FiberUtil]
-           [co.paralleluniverse.fibers.instrument]
+  (:import [java.util.concurrent
+            TimeUnit ExecutionException TimeoutException Future]
+           [co.paralleluniverse.strands
+            Strand Stranded SuspendableCallable]
+           [co.paralleluniverse.fibers DefaultFiberScheduler
+            FiberScheduler Fiber Joinable FiberUtil]
+           ;; this import down there makes the spec crash
+           #_[co.paralleluniverse.fibers.instrument]
            [co.paralleluniverse.strands.channels Channel Channels Channels$OverflowPolicy ReceivePort SendPort
             Selectable Selector SelectAction
             TickerChannelConsumer Topic ReceivePortGroup
             IntChannel LongChannel FloatChannel DoubleChannel
             IntSendPort LongSendPort FloatSendPort DoubleSendPort
             IntReceivePort LongReceivePort FloatReceivePort DoubleReceivePort]
-           [co.paralleluniverse.strands.dataflow Val Var]
-           [co.paralleluniverse.pulsar ClojureHelper ChannelsHelper ClojureFiberAsync]
+           [co.paralleluniverse.strands.dataflow
+            Val Var]
+           [co.paralleluniverse.pulsar
+            ClojureHelper ChannelsHelper ClojureFiberAsync]
            ;; for types:
-           [clojure.lang Keyword Sequential IObj IMeta IDeref ISeq IPersistentCollection IPersistentVector IPersistentMap])
+           [clojure.lang
+            Keyword Sequential IObj IMeta IDeref ISeq
+            IPersistentCollection IPersistentVector IPersistentMap])
   (:require [co.paralleluniverse.pulsar.interop :refer :all]))
 
 ;; ## clojure.core type annotations

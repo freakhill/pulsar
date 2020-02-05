@@ -1,4 +1,4 @@
-(def quasar-version "0.7.9")
+(def quasar-version "0.8.0")
 
 (defproject co.paralleluniverse/pulsar "0.7.9"
   :description "A Clojure lightweight thread, asynchronous programming, and actor library"
@@ -15,40 +15,41 @@
   :repositories {"snapshots" "https://oss.sonatype.org/content/repositories/snapshots"
                  "releases" "https://oss.sonatype.org/content/repositories/releases"}
   :test-selectors {:selected :selected}
-  :dependencies [[org.clojure/clojure "1.8.0"]
+  :dependencies [[org.clojure/clojure "1.10.1"]
                  [co.paralleluniverse/quasar-core   ~quasar-version] ; :classifier "jdk8"
                  [co.paralleluniverse/quasar-actors ~quasar-version]
-                 [org.ow2.asm/asm "5.2"]
-                 [org.clojure/core.match "0.2.2" :exclusions [org.ow2.asm/*]]
-                 [org.flatland/useful "0.11.5"]
+                 [org.ow2.asm/asm "7.3.1"]
+                 [org.clojure/core.match "0.3.0" :exclusions [org.ow2.asm/*]]
+                 [org.flatland/useful "0.11.6"]
                  [gloss "0.2.6" :exclusions [com.yammer.metrics/metrics-core useful]]]
   :manifest {"Premain-Class" "co.paralleluniverse.fibers.instrument.JavaAgent"
              "Can-Retransform-Classes" "true"}
   :jvm-opts ["-server"
-             ;"-Dclojure.compiler.disable-locals-clearing=true"
+                                        ;"-Dclojure.compiler.disable-locals-clearing=true"
              ;; ForkJoin wants these:
              "-XX:-UseBiasedLocking"
              "-XX:+UseCondCardMark"
 	     "-Xmx2048M"]
-  ;:injections [(alter-var-root #'*compiler-options* (constantly {:disable-locals-clearing true}))]
+                                        ;:injections [(alter-var-root #'*compiler-options* (constantly {:disable-locals-clearing true}))]
   :java-agents [[co.paralleluniverse/quasar-core ~quasar-version :options "m"]] ; :classifier "jdk8" :options "vdc"
   :pedantic :warn
   :profiles {;; ----------- dev --------------------------------------
              :dev
-             {:plugins [[lein-midje "3.2"]]
-              :dependencies [[midje "1.8.3"]]
+             {:plugins [[lein-midje "3.2.1"]
+                        [lein-ancient "0.6.15"]]
+              :dependencies [[midje "1.9.9"]]
               :jvm-opts [;; Debugging
                          "-ea"
-                         ;"-Dco.paralleluniverse.fibers.verifyInstrumentation=true"
+                                        ;"-Dco.paralleluniverse.fibers.verifyInstrumentation=true"
                          "-Dco.paralleluniverse.fibers.detectRunawayFibers=false"
-                         ;"-Dco.paralleluniverse.fibers.traceInterrupt=true"
+                                        ;"-Dco.paralleluniverse.fibers.traceInterrupt=true"
                          ;; Recording
-                         ;"-Dco.paralleluniverse.debugMode=true"
-                         ;"-Dco.paralleluniverse.globalFlightRecorder=true"
-                         ;"-Dco.paralleluniverse.monitoring.flightRecorderLevel=1"
-                         ;"-Dco.paralleluniverse.flightRecorderDumpFile=pulsar.log"
-                         ;"-Xdebug"
-                         ;"-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005"
+                                        ;"-Dco.paralleluniverse.debugMode=true"
+                                        ;"-Dco.paralleluniverse.globalFlightRecorder=true"
+                                        ;"-Dco.paralleluniverse.monitoring.flightRecorderLevel=1"
+                                        ;"-Dco.paralleluniverse.flightRecorderDumpFile=pulsar.log"
+                                        ;"-Xdebug"
+                                        ;"-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005"
                          ;; Logging
                          "-Dlog4j.configurationFile=log4j.xml"
                          "-DLog4jContextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
@@ -68,24 +69,24 @@
                          "-ea"
                          ;; Galaxy
                          "-Djgroups.bind_addr=127.0.0.1"
-                         ; "-Dgalaxy.nodeId=1"
-                         ; "-Dgalaxy.port=7051"
-                         ; "-Dgalaxy.slave_port=8051"
+                                        ; "-Dgalaxy.nodeId=1"
+                                        ; "-Dgalaxy.port=7051"
+                                        ; "-Dgalaxy.slave_port=8051"
                          "-Dgalaxy.multicast.address=225.0.0.1"
                          "-Dgalaxy.multicast.port=7050"
                          "-Dco.paralleluniverse.galaxy.configFile=src/test/clojure/co/paralleluniverse/pulsar/examples/cluster/config/peer.xml"
                          "-Dco.paralleluniverse.galaxy.autoGoOnline=true"
                          ;; Logging
                          "-Dlog4j.configurationFile=log4j.xml"
-                         ;"-DLog4jContextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
+                                        ;"-DLog4jContextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
                          ]}
 
              ;; ----------- doc --------------------------------------
              :doc
-             {:plugins [[lein-midje "3.2"]
+             {:plugins [[lein-midje "3.2.1"]
                         [lein-codox "0.9.3"]
                         [michaelblume/lein-marginalia "0.9.0"]]
-              :dependencies [[midje "1.8.3"]]
+              :dependencies [[midje "1.9.9"]]
               :exclusions [org.clojure/tools.namespace]
               :injections [(require 'clojure.test)
                            (alter-var-root #'clojure.test/*load-tests* (constantly false))]

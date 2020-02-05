@@ -177,17 +177,17 @@
     (equals [^Multiset this o] (boolean (when (instance? Multiset o) (= (.entrySet this) (.entrySet ^Multiset o)))))
     (toString [^Multiset this] (.toString (.entrySet this)))
     (toArray [_] (to-array Object (mapcat (fn [[v c]] (repeat c v)) m)))
-    (toArray [_ a]
-      (let [vs (mapcat (fn [[v c]] (repeat c v)) m)]
-        (if (>= (alength a) (count vs))
-          (loop [i (int 0)
-                 vs vs]
-            (if (seq vs)
-              (do
-                (aset a i (first vs))
-                (recur (inc i) (rest vs)))
-              a))
-          (into-array (.getComponentType ^Class (.getClass a)) (mapcat (fn [[v c]] (repeat c v)) m)))))
+    (^objects toArray [_ ^objects a]
+     (let [vs (mapcat (fn [[v c]] (repeat c v)) m)]
+       (if (>= (alength a) (count vs))
+         (loop [i (int 0)
+                vs vs]
+           (if (seq vs)
+             (do
+               (aset a i (first vs))
+               (recur (inc i) (rest vs)))
+             a))
+         (into-array (.getComponentType ^Class (.getClass a)) (mapcat (fn [[v c]] (repeat c v)) m)))))
     (clear [_] (throw (UnsupportedOperationException.)))
     (add [_ v] (throw (UnsupportedOperationException.)))
     (add [_ v count] (throw (UnsupportedOperationException.)))

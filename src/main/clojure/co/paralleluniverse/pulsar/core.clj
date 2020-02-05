@@ -1,49 +1,49 @@
- ; Pulsar: lightweight threads and Erlang-like actors for Clojure.
- ; Copyright (C) 2013-2015, Parallel Universe Software Co. All rights reserved.
- ;
- ; This program and the accompanying materials are dual-licensed under
- ; either the terms of the Eclipse Public License v1.0 as published by
- ; the Eclipse Foundation
- ;
- ;   or (per the licensee's choosing)
- ;
- ; under the terms of the GNU Lesser General Public License version 3.0
- ; as published by the Free Software Foundation.
+;; Pulsar: lightweight threads and Erlang-like actors for Clojure.
+;; Copyright (C) 2013-2015, Parallel Universe Software Co. All rights reserved.
+;;
+;; This program and the accompanying materials are dual-licensed under
+;; either the terms of the Eclipse Public License v1.0 as published by
+;; the Eclipse Foundation
+;;
+;;   or (per the licensee's choosing)
+;;
+;; under the terms of the GNU Lesser General Public License version 3.0
+;; as published by the Free Software Foundation.
 
-;;;
-;;;
-;;;
-;;;
+;;
+;;
+;;
+;;
 
 (ns co.paralleluniverse.pulsar.core
   "Pulsar is an implementation of lightweight threads (fibers),
-  Go-like channles and Erlang-like actors for the JVM"
-(:refer-clojure :exclude [promise await bean])
-(:import [java.util.concurrent TimeUnit ExecutionException TimeoutException Future]
-         [co.paralleluniverse.strands Strand Stranded]
-         [co.paralleluniverse.strands SuspendableCallable]
-         [co.paralleluniverse.fibers DefaultFiberScheduler FiberScheduler Fiber Joinable FiberUtil]
-         [co.paralleluniverse.fibers.instrument]
-         [co.paralleluniverse.strands.channels Channel Channels Channels$OverflowPolicy ReceivePort SendPort
-          Selectable Selector SelectAction
-          TickerChannelConsumer Topic ReceivePortGroup
-          IntChannel LongChannel FloatChannel DoubleChannel
-          IntSendPort LongSendPort FloatSendPort DoubleSendPort
-          IntReceivePort LongReceivePort FloatReceivePort DoubleReceivePort]
-         [co.paralleluniverse.strands.dataflow Val Var]
-         [co.paralleluniverse.pulsar ClojureHelper ChannelsHelper ClojureFiberAsync]
-         ; for types:
-         [clojure.lang Keyword Sequential IObj IMeta IDeref ISeq IPersistentCollection IPersistentVector IPersistentMap])
-(:require [co.paralleluniverse.pulsar.interop :refer :all]))
+  Go-like channels and Erlang-like actors for the JVM"
+  (:refer-clojure :exclude [promise await bean])
+  (:import [java.util.concurrent TimeUnit ExecutionException TimeoutException Future]
+           [co.paralleluniverse.strands Strand Stranded]
+           [co.paralleluniverse.strands SuspendableCallable]
+           [co.paralleluniverse.fibers DefaultFiberScheduler FiberScheduler Fiber Joinable FiberUtil]
+           [co.paralleluniverse.fibers.instrument]
+           [co.paralleluniverse.strands.channels Channel Channels Channels$OverflowPolicy ReceivePort SendPort
+            Selectable Selector SelectAction
+            TickerChannelConsumer Topic ReceivePortGroup
+            IntChannel LongChannel FloatChannel DoubleChannel
+            IntSendPort LongSendPort FloatSendPort DoubleSendPort
+            IntReceivePort LongReceivePort FloatReceivePort DoubleReceivePort]
+           [co.paralleluniverse.strands.dataflow Val Var]
+           [co.paralleluniverse.pulsar ClojureHelper ChannelsHelper ClojureFiberAsync]
+           ;; for types:
+           [clojure.lang Keyword Sequential IObj IMeta IDeref ISeq IPersistentCollection IPersistentVector IPersistentMap])
+  (:require [co.paralleluniverse.pulsar.interop :refer :all]))
 
 ;; ## clojure.core type annotations
 
-;(ann clojure.core/split-at (All [x] (IFn [Long (IPersistentCollection x) -> (IPersistentVector (IPersistentCollection x))])))
-;(ann clojure.core/coll? [Any -> Boolean :filters {:then (is (IPersistentCollection Any) 0) :else (! (IPersistentCollection Any) 0)}])
-;(ann clojure.core/partition-all (All [x] (IFn [Long (ISeq x) -> (ISeq (U (ISeq x) x))])))
-;(ann clojure.core/into (All [[xs :< (IPersistentCollection Any)]] (IFn [xs (IPersistentCollection Any) -> xs])))
-;(ann clojure.core/set-agent-send-executor! [java.util.concurrent.ExecutorService -> nil])
-;(ann clojure.core/set-agent-send-off-executor! [java.util.concurrent.ExecutorService -> nil])
+#_(ann clojure.core/split-at (All [x] (IFn [Long (IPersistentCollection x) -> (IPersistentVector (IPersistentCollection x))])))
+#_(ann clojure.core/coll? [Any -> Boolean :filters {:then (is (IPersistentCollection Any) 0) :else (! (IPersistentCollection Any) 0)}])
+#_(ann clojure.core/partition-all (All [x] (IFn [Long (ISeq x) -> (ISeq (U (ISeq x) x))])))
+#_(ann clojure.core/into (All [[xs :< (IPersistentCollection Any)]] (IFn [xs (IPersistentCollection Any) -> xs])))
+#_(ann clojure.core/set-agent-send-executor! [java.util.concurrent.ExecutorService -> nil])
+#_(ann clojure.core/set-agent-send-off-executor! [java.util.concurrent.ExecutorService -> nil])
 
 ;; ## Private util functions
 ;; These are internal functions aided to assist other functions in handling variadic arguments and the like.
@@ -62,16 +62,16 @@
   `(do (when-not ~(first pairs)
          (throw (IllegalArgumentException.
                  (str (first ~'&form) " requires " ~(second pairs) " in " ~'*ns* ":" (:line (meta ~'&form))))))
-     ~(let [more (nnext pairs)]
-        (when more
-          (list* `assert-args more)))))
+       ~(let [more (nnext pairs)]
+          (when more
+            (list* `assert-args more)))))
 
 #_(ann sequentialize (All [x y]
-                        (IFn
-                         [(IFn [x -> y]) ->
-                          (IFn [x -> y]
-                              [(ISeq x) -> (ISeq y)]
-                              [x * -> (ISeq y)])])))
+                          (IFn
+                           [(IFn [x -> y]) ->
+                            (IFn [x -> y]
+                                 [(ISeq x) -> (ISeq y)]
+                                 [x * -> (ISeq y)])])))
 (defn- sequentialize
   "Takes a function of a single argument and returns a function that either takes any number of arguments or a
   a single sequence, and applies the original function to each argument or each element of the sequence"
@@ -83,7 +83,7 @@
 ;;     (surround-with nil 4 5 6) -> (4 5 6)
 ;;     (surround-with '(1 2 3) 4 5 6) -> ((1 2 3 4 5 6))
 ;;     (surround-with '(1 (2)) '(3 4)) -> ((1 (2) (3 4)))
-;(ann surround-with [(ISeq Any) Any * -> (ISeq Any)])
+#_(ann surround-with [(ISeq Any) Any * -> (ISeq Any)])
 (defn surround-with
   {:no-doc true}
   [expr & exprs]
@@ -94,14 +94,14 @@
 ;;     (deep-surround-with '(1 2 3) 4 5 6) -> (1 2 3 4 5 6)
 ;;     (deep-surround-with '(1 2 (3)) 4 5 6) -> (1 2 (3 4 5 6))
 ;;     (deep-surround-with '(1 2 (3 (4))) 5 6 7) -> (1 2 (3 (4 5 6 7)))
-;(ann ^:no-check deep-surround-with [(ISeq Any) Any * -> (ISeq Any)])
+#_(ann ^:no-check deep-surround-with [(ISeq Any) Any * -> (ISeq Any)])
 (defn- deep-surround-with
   [expr & exprs]
   (if (not (coll? (last expr)))
     (concat expr exprs)
     (concat (butlast expr) (list (apply deep-surround-with (cons (last expr) exprs))))))
 
-;(ann ops-args [(ISeq (HVec (IFn [Any -> Boolean]) Any)) (ISeq Any) -> (ISeq Any)])
+#_(ann ops-args [(ISeq (HVec (IFn [Any -> Boolean]) Any)) (ISeq Any) -> (ISeq Any)])
 (defn- ops-args
   "Used to simplify optional parameters in functions.
   Takes a sequence of [predicate? default] pairs, and a sequence of arguments. Tests the first predicate against
@@ -118,7 +118,7 @@
     (seq xs)))
 
 #_(ann merge-meta (All [[x :< clojure.lang.IObj] [y :< (IPersistentMap Keyword Any)]]
-                     [x y -> (I x (IMeta y))]))
+                       [x y -> (I x (IMeta y))]))
 (defn merge-meta
   {:no-doc true}
   [s m]
@@ -127,7 +127,7 @@
 (defn tagged [tag sym]
   (vary-meta sym assoc :tag tag))
 
-;(ann keyword->timeunit [Keyword -> TimeUnit])
+#_(ann keyword->timeunit [Keyword -> TimeUnit])
 (defn- ^TimeUnit keyword->timeunit
   [x]
   (case x
@@ -139,7 +139,7 @@
     (:hours :hrs)               TimeUnit/HOURS
     :days                       TimeUnit/DAYS))
 
-;(ann ->timeunit [(U TimeUnit Keyword) -> TimeUnit])
+#_(ann ->timeunit [(U TimeUnit Keyword) -> TimeUnit])
 (defn ^TimeUnit ->timeunit
   "Constructs an instance of `java.util.concurrent.TimeUnit`.
   If argument x is already an instance of `TimeUnit`, the function returns x.
@@ -167,13 +167,13 @@
   [x from-unit to-unit]
   (.convert (->timeunit to-unit) x (->timeunit from-unit)))
 
-;(ann unwrap-exception* [Throwable -> Throwable])
+#_(ann unwrap-exception* [Throwable -> Throwable])
 (defn unwrap-exception*
   {:no-doc true}
   [^Throwable e]
   (if
-    (or (instance? ExecutionException e)
-        (and (= (.getClass e) RuntimeException) (.getCause e)))
+      (or (instance? ExecutionException e)
+          (and (= (.getClass e) RuntimeException) (.getCause e)))
     (unwrap-exception* (.getCause e))
     e))
 
@@ -189,7 +189,7 @@
 ;; Only functions that have been especially instrumented can perform blocking actions
 ;; while running in a fiber.
 
-;(ann suspendable? [IFn -> Boolean])
+#_(ann suspendable? [IFn -> Boolean])
 (defn suspendable?
   "Returns true of a function has been instrumented as suspendable; false otherwise."
   [f]
@@ -197,8 +197,8 @@
       (.isAnnotationPresent (.getClass ^Object f) co.paralleluniverse.fibers.Instrumented)))
 
 #_(ann suspendable! (IFn [IFn -> IFn]
-                      [IFn * -> (ISeq IFn)]
-                      [(ISeq IFn) -> (ISeq IFn)]))
+                         [IFn * -> (ISeq IFn)]
+                         [(ISeq IFn) -> (ISeq IFn)]))
 (defn suspendable!
   "Makes a function suspendable."
   ([f]
@@ -207,7 +207,7 @@
   ([x prot]
    (ClojureHelper/retransform x prot)))
 
-;(ann ->suspendable-callable [[Any -> Any] -> SuspendableCallable])
+#_(ann ->suspendable-callable [[Any -> Any] -> SuspendableCallable])
 (defn ^SuspendableCallable ->suspendable-callable
   "wrap a clojure function as a SuspendableCallable"
   {:no-doc true}
@@ -239,15 +239,15 @@
 (defmacro letsfn
   "Defines a local suspendable function that can be used by a fiber or actor.
   Used exactly like `letfn`"
-[fnspecs & body]
-`(let ~(vec (interleave (map first fnspecs)
-                        (map #(cons `sfn %) fnspecs)))
-   ~@body))
+  [fnspecs & body]
+  `(let ~(vec (interleave (map first fnspecs)
+                          (map #(cons `sfn %) fnspecs)))
+     ~@body))
 
 #_(ann ^:no-check strampoline (All [v1 v2 ...]
-                                (IFn
-                                 [(IFn [v1 v2 ... v2 -> Any]) v1 v2 ... v2 -> Any]
-                                 [[-> Any] -> Any])))
+                                   (IFn
+                                    [(IFn [v1 v2 ... v2 -> Any]) v1 v2 ... v2 -> Any]
+                                    [[-> Any] -> Any])))
 (defsfn strampoline
   "A suspendable version of trampoline. Should be used to implement
   finite-state-machine actors.
@@ -260,12 +260,12 @@
   final value, you must wrap it in some data structure and unpack it
   after trampoline returns."
   ([f]
-     (let [ret (f)]
-       (if (fn? ret)
-         (recur ret)
-         ret)))
+   (let [ret (f)]
+     (if (fn? ret)
+       (recur ret)
+       ret)))
   ([f & args]
-     (strampoline #(apply f args))))
+   (strampoline #(apply f args))))
 
 (defsfn apply-variadic
   "Calls a variadic function by applying a concat of all arguments with the last argument (which is supposedly a collection)"
@@ -275,17 +275,17 @@
 
 #_(ann ^:no-check kps-args [(ISeq Any) -> (HVec (ISeq Any) (ISeq Any))])
 (defsfn kps-args
-        {:no-doc true}
-        [args]
-        (let [aps (partition-all 2 args)
-              [opts-and-vals ps] (split-with #(keyword? (first %)) aps)
-              options (into {} (map vec opts-and-vals))
-              positionals (reduce into [] ps)]
-          [options positionals]))
+  {:no-doc true}
+  [args]
+  (let [aps (partition-all 2 args)
+        [opts-and-vals ps] (split-with #(keyword? (first %)) aps)
+        options (into {} (map vec opts-and-vals))
+        positionals (reduce into [] ps)]
+    [options positionals]))
 
 ;; ## Fibers
 
-;(ann current-fiber [-> Fiber])
+#_(ann current-fiber [-> Fiber])
 (defn current-fiber
   "Returns the currently running lightweight-thread or `nil` if none."
   []
@@ -295,18 +295,18 @@
   (when-let [^Fiber f (current-fiber)]
     (.getScheduler f)))
 
-;(ann default-fiber-scheduler FiberScheduler)
+#_(ann default-fiber-scheduler FiberScheduler)
 (def ^FiberScheduler default-fiber-scheduler
   "A global fiber scheduler. The scheduler uses all available processor cores."
   (DefaultFiberScheduler/getInstance))
 
-;(ann get-scheduler [-> FiberScheduler])
+#_(ann get-scheduler [-> FiberScheduler])
 (defn ^FiberScheduler get-scheduler
   {:no-doc true}
   [^FiberScheduler scheduler]
   (or scheduler (current-scheduler) default-fiber-scheduler))
 
-;(ann create-fiber [String FiberScheduler AnyInteger [Any -> Any] -> Fiber])
+#_(ann create-fiber [String FiberScheduler AnyInteger [Any -> Any] -> Fiber])
 (defn ^Fiber create-fiber
   "Creates, but does not start a new fiber (a lightweight thread) running in a fork/join pool.
 
@@ -315,7 +315,7 @@
   (let [[^String name ^FiberScheduler scheduler ^Integer stacksize f] (ops-args [[string? nil] [#(instance? FiberScheduler %) default-fiber-scheduler] [integer? -1]] args)]
     (Fiber. name (get-scheduler scheduler) (int stacksize) (->suspendable-callable f))))
 
-;(ann start [Fiber -> Fiber])
+#_(ann start [Fiber -> Fiber])
 (defn start
   "Starts a fiber created with `create-fiber`."
   [^Fiber fiber]
@@ -339,7 +339,7 @@
            fiber# (co.paralleluniverse.fibers.Fiber. ~name (get-scheduler ~scheduler) (int ~stack-size) (->suspendable-callable f#))]
        (.start fiber#))))
 
-;(ann current-fiber [-> Fiber])
+#_(ann current-fiber [-> Fiber])
 (defn fiber->future
   "Takes a spawned fiber yields a future object that will
   invoke the function in another thread, and will cache the result and
@@ -353,10 +353,10 @@
       (deref [_] (.get fut))
       clojure.lang.IBlockingDeref
       (deref
-       [_ timeout-ms timeout-val]
-       (try (.get fut timeout-ms TimeUnit/MILLISECONDS)
-          (catch TimeoutException e
-            timeout-val)))
+          [_ timeout-ms timeout-val]
+        (try (.get fut timeout-ms TimeUnit/MILLISECONDS)
+             (catch TimeoutException e
+               timeout-val)))
       clojure.lang.IPending
       (isRealized [_] (.isDone fut))
       Future
@@ -372,30 +372,30 @@
   `(spawn-fiber (fn [] ~@body)))
 
 (defmacro await
-"Calls f, which takes a callback of a single argument as its last parameter,
+  "Calls f, which takes a callback of a single argument as its last parameter,
   with arguments args, and blocks the current fiber until the callback is called,
   then returns the value passed to the callback."
   [f & args]
   (let [fa (tagged `ClojureFiberAsync (gensym "fa"))
         fa1 (tagged `ClojureFiberAsync (gensym "fa1"))]
-  `(let [~fa
-         (co.paralleluniverse.pulsar.ClojureFiberAsync.
-           (fn [~fa1]
-             (~f ~@args #(.complete ~fa1 %))))]
-     (.run ~fa))))
+    `(let [~fa
+           (co.paralleluniverse.pulsar.ClojureFiberAsync.
+            (fn [~fa1]
+              (~f ~@args #(.complete ~fa1 %))))]
+       (.run ~fa))))
 
 
 ;; ## Strands
 ;; A strand is either a thread or a fiber.
 
-;(ann current-strand [-> Strand])
+#_(ann current-strand [-> Strand])
 (defn ^Strand current-strand
   "Returns the currently running fiber (if running in fiber)
   or current thread (if not)."
   []
   (Strand/currentStrand))
 
-;(ann alive? [Strand -> Boolean])
+#_(ann alive? [Strand -> Boolean])
 (defn alive?
   "Tests whether or not a strand is alive.
   A strand is alive if it has been started but has not yet died."
@@ -422,30 +422,30 @@
   (let [[{:keys [^String name]} body] (kps-args args)]
     (let [f      (if (== (count body) 1) (first body) (fn [] (apply (first body) (rest body))))
           thread (if name (Thread. ^Runnable f ^String name) (Thread. ^Runnable f))]
-       (.start thread)
-       thread)))
+      (.start thread)
+      thread)))
 
-;(ann join* [(U Joinable Thread) -> (Option Any)])
+#_(ann join* [(U Joinable Thread) -> (Option Any)])
 (defsfn ^:private join*
   ([s]
    (unwrap-exception
-     (cond
-       (instance? Joinable s) (.get ^Joinable s)
-       (instance? Strand s)   (Strand/join s)
-       (instance? Thread s)   (Strand/join (Strand/of ^Thread s))
-       (instance? co.paralleluniverse.actors.ActorRef s) (co.paralleluniverse.actors.LocalActor/get s)
-       :else (throw (IllegalArgumentException. (str "Cannot join " s))))))
+    (cond
+      (instance? Joinable s) (.get ^Joinable s)
+      (instance? Strand s)   (Strand/join s)
+      (instance? Thread s)   (Strand/join (Strand/of ^Thread s))
+      (instance? co.paralleluniverse.actors.ActorRef s) (co.paralleluniverse.actors.LocalActor/get s)
+      :else (throw (IllegalArgumentException. (str "Cannot join " s))))))
   ([timeout unit s]
    (unwrap-exception
-     (cond
-       (instance? Joinable s) (.get ^Joinable s timeout (->timeunit unit))
-       (instance? Strand s)   (Strand/join s timeout (->timeunit unit))
-       (instance? Thread s)   (Strand/join (Strand/of ^Thread s) timeout (->timeunit unit))
-       (instance? co.paralleluniverse.actors.ActorRef s) (co.paralleluniverse.actors.LocalActor/get s timeout (->timeunit unit))
-       :else (throw (IllegalArgumentException. (str "Cannot join " s)))))))
+    (cond
+      (instance? Joinable s) (.get ^Joinable s timeout (->timeunit unit))
+      (instance? Strand s)   (Strand/join s timeout (->timeunit unit))
+      (instance? Thread s)   (Strand/join (Strand/of ^Thread s) timeout (->timeunit unit))
+      (instance? co.paralleluniverse.actors.ActorRef s) (co.paralleluniverse.actors.LocalActor/get s timeout (->timeunit unit))
+      :else (throw (IllegalArgumentException. (str "Cannot join " s)))))))
 
 #_(ann join (IFn [(U Joinable Thread) -> (Option Any)]
-              [(Sequential (U Joinable Thread)) -> (ISeq Any)]))
+                 [(Sequential (U Joinable Thread)) -> (ISeq Any)]))
 (defsfn join
   "Awaits the termination of the given strand or strands, and returns
   their result, if applicable.
@@ -494,33 +494,33 @@
   ([f]
    (let [dv (Val. (->suspendable-callable (suspendable! f)))]
      (sreify
-       clojure.lang.IDeref
-       (deref [_]
-              (.get dv))
-       clojure.lang.IBlockingDeref
-       (deref
-        [_ timeout-ms timeout-val]
-        (try
-          (.get dv timeout-ms TimeUnit/MILLISECONDS)
-          (catch TimeoutException e
-            timeout-val)))
-       clojure.lang.IPending
-       (isRealized [this]
-                   (.isDone dv))
-       clojure.lang.IFn
-       (invoke
-        [this x]
-        (try
-          (.set dv x)
-          this
-          (catch IllegalStateException _ nil))))))
+      clojure.lang.IDeref
+      (deref [_]
+             (.get dv))
+      clojure.lang.IBlockingDeref
+      (deref
+       [_ timeout-ms timeout-val]
+       (try
+         (.get dv timeout-ms TimeUnit/MILLISECONDS)
+         (catch TimeoutException e
+           timeout-val)))
+      clojure.lang.IPending
+      (isRealized [this]
+                  (.isDone dv))
+      clojure.lang.IFn
+      (invoke
+       [this x]
+       (try
+         (.set dv x)
+         this
+         (catch IllegalStateException _ nil))))))
   ([]
    (promise nil)))
 
 ;; ## Channels
 
 #_(ann channel (IFn [AnyInteger -> Channel]
-                 [-> Channel]))
+                    [-> Channel]))
 (defn ^Channel channel
   "Creates a new channel.
 
@@ -570,7 +570,7 @@
     (instance? DoubleChannel ticker) (Channels/newTickerConsumerFor ^DoubleChannel ticker)
     :else                            (Channels/newTickerConsumerFor ticker)))
 
-;(ann snd (All [x] [Channel x -> x]))
+#_(ann snd (All [x] [Channel x -> x]))
 (defsfn snd
   "Sends a message to a channel.
   If the channel's overflow policy is `:block` than this function will block
@@ -578,7 +578,7 @@
   [^SendPort channel message]
   (.send channel message))
 
-;(ann snd (All [x] [Channel x -> x]))
+#_(ann snd (All [x] [Channel x -> x]))
 (defn try-snd
   "Tries to immediately send a message to a channel.
   If the channel's capacity is exceeded, this function fails and returns `false`.
@@ -588,7 +588,7 @@
   (.trySend channel message))
 
 #_(ann rcv (IFn [Channel -> Any]
-             [Channel Long (U TimeUnit Keyword) -> (Option Any)]))
+                [Channel Long (U TimeUnit Keyword) -> (Option Any)]))
 (defsfn rcv
   "Receives a message from a channel.
   This function will block until a message is available or until the timeout,
@@ -643,7 +643,7 @@
   [to ^ReceivePort channel n]
   (if (instance? clojure.lang.IEditableCollection to)
     (loop [to to
-            n (int n)]
+           n (int n)]
       (if-let [m (and (pos? n) (rcv channel))]
         (recur (conj to m) (dec n))
         to))
@@ -692,12 +692,12 @@
   (let [^TimeUnit unit (when millis TimeUnit/MILLISECONDS)
         millis (long (or millis 0))]
     (Selector/select
-      ^boolean (if priority true false)
-      millis unit
-      ^java.util.List (doall (map #(if (vector? %)
-                                     (Selector/send ^SendPort (first %) (second %))
-                                     (Selector/receive ^ReceivePort %))
-                                  ports)))))
+     ^boolean (if priority true false)
+     millis unit
+     ^java.util.List (doall (map #(if (vector? %)
+                                    (Selector/send ^SendPort (first %) (second %))
+                                    (Selector/receive ^ReceivePort %))
+                                 ports)))))
 
 (defsfn sel
   "Performs up to one of several given channel operations.
@@ -776,22 +776,22 @@
         sa (tagged `SelectAction (gensym "sa"))]
     `(let [~sa (do-sel (list ~@ports) ~priority ~timeout)]
        ~@(surround-with
-           (when dflt
-             `(if (nil? ~sa) ~(:else opts)))
-           `(case (.index ~sa)
-              ~@(mapcat
-                  (fn [i e]
-                    (let [b (if (and (list? e) (vector? (first e))) (first e) []) ; binding
-                          a (if (and (list? e) (vector? (first e))) (rest e)  (list e))] ; action
-                      `(~i (let ~(vec (concat (when-let [vr (first b)]  `(~vr (.message ~sa)))
-                                              (when-let [vr (second b)] `(~vr (.port ~sa)))))
-                             ~@a))))
-                  (range) exprs))))))
+          (when dflt
+            `(if (nil? ~sa) ~(:else opts)))
+          `(case (.index ~sa)
+             ~@(mapcat
+                (fn [i e]
+                  (let [b (if (and (list? e) (vector? (first e))) (first e) []) ; binding
+                        a (if (and (list? e) (vector? (first e))) (rest e)  (list e))] ; action
+                    `(~i (let ~(vec (concat (when-let [vr (first b)]  `(~vr (.message ~sa)))
+                                            (when-let [vr (second b)] `(~vr (.port ~sa)))))
+                           ~@a))))
+                (range) exprs))))))
 
 ;; ### Primitive channels
 
 #_(ann int-channel (IFn [AnyInteger -> IntChannel]
-                     [-> IntChannel]))
+                        [-> IntChannel]))
 (defn ^IntChannel int-channel
   "Creates an int channel"
   ([size overflow-policy] (Channels/newIntChannel (int size) (keyword->enum Channels$OverflowPolicy overflow-policy)))
@@ -823,7 +823,7 @@
    `(int (.receiveInt ~(tagged `IntReceivePort channel) (long ~timeout) (->timeunit ~unit)))))
 
 #_(ann long-channel (IFn [AnyInteger -> LongChannel]
-                      [-> LongChannel]))
+                         [-> LongChannel]))
 (defn ^LongChannel long-channel
   "Creates a long channel"
   ([size overflow-policy] (Channels/newLongChannel (int size) (keyword->enum Channels$OverflowPolicy overflow-policy)))
@@ -855,7 +855,7 @@
    `(long (.receiveLong ~(tagged `LongReceivePort channel) (long ~timeout) (->timeunit ~unit)))))
 
 #_(ann float-channel (IFn [AnyInteger -> FloatChannel]
-                       [-> FloatChannel]))
+                          [-> FloatChannel]))
 (defn ^FloatChannel float-channel
   "Creates a float channel"
   ([size overflow-policy] (Channels/newFloatChannel (int size) (keyword->enum Channels$OverflowPolicy overflow-policy)))
@@ -887,7 +887,7 @@
    `(float (.receiveFloat ~(tagged `FloatReceivePort channel) (long ~timeout) (->timeunit ~unit)))))
 
 #_(ann double-channel (IFn [AnyInteger -> DoubleChannel]
-                        [-> DoubleChannel]))
+                           [-> DoubleChannel]))
 (defn ^DoubleChannel double-channel
   "Creates a double channel"
   ([size overflow-policy] (Channels/newDoubleChannel (int size) (keyword->enum Channels$OverflowPolicy overflow-policy)))
@@ -917,5 +917,3 @@
    `(double (.receiveDouble ~(tagged `DoubleReceivePort channel))))
   ([channel timeout unit]
    `(double (.receiveDouble ~(tagged `DoubleReceivePort channel) (long ~timeout) (->timeunit ~unit)))))
-
-

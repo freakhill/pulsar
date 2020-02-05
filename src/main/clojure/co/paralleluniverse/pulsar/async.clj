@@ -33,8 +33,6 @@
    (com.google.common.base Predicate Function)
    (co.paralleluniverse.strands.channels.transfer Pipeline)))
 
-(alias 'core 'clojure.core)
-
 (defn buffer
   "Returns a fixed buffer of size n. When full, puts will block/park."
   [n]
@@ -195,11 +193,11 @@
   "Returns a SelectAction given a set of selection operations and an options map"
   [ports opts]
   (let [^boolean priority (if (:priority opts) true false)
-        ^List ps (core/map (fn [port]
-                                  (if (vector? port)
-                                    (Selector/send ^SendPort (first port) (second port))
-                                    (Selector/receive ^ReceivePort port)))
-                                ports)
+        ^List ps (clojure.core/map (fn [port]
+                                     (if (vector? port)
+                                       (Selector/send ^SendPort (first port) (second port))
+                                       (Selector/receive ^ReceivePort port)))
+                                   ports)
         ^SelectAction sa (if (:default opts)
                            (Selector/trySelect priority ps)
                            (Selector/select    priority ps))]
@@ -270,10 +268,10 @@
 
    Pulsar implementation: Identical to alt!!. May be used outside go blocks as well."
   [& clauses]
-  (let [clauses (core/partition 2 clauses)
+  (let [clauses (clojure.core/partition 2 clauses)
         opt? #(keyword? (first %))
         opts (filter opt? clauses)
-        opts (zipmap (core/map first opts) (core/map second opts))
+        opts (zipmap (clojure.core/map first opts) (clojure.core/map second opts))
         clauses (remove opt? clauses)
         ports (mapcat #(let [x (first %)] (if (vector? x) x (list x))) clauses)
         exprs (mapcat #(let [x (first %) ; ports
@@ -285,16 +283,16 @@
     `(let [^SelectAction ~sa
            (do-alts-internal (list ~@ports) ~opts)]
        ~@(p/surround-with (when dflt
-                   `(if (nil? ~sa) ~(:default opts)))
-                 `(case (.index ~sa)
-                    ~@(mapcat
-                        (fn [i e]
-                          (let [b (if (and (list? e) (vector? (first e))) (first e) []) ; binding
-                                a (if (and (list? e) (vector? (first e))) (rest e)  (list e))] ; action
-                            `(~i (let ~(vec (concat (when-let [vr (first b)]  `(~vr (.message ~sa)))
-                                                    (when-let [vr (second b)] `(~vr (.port ~sa)))))
-                                   ~@a))))
-                        (range) exprs))))))
+                            `(if (nil? ~sa) ~(:default opts)))
+                          `(case (.index ~sa)
+                             ~@(mapcat
+                                (fn [i e]
+                                  (let [b (if (and (list? e) (vector? (first e))) (first e) []) ; binding
+                                        a (if (and (list? e) (vector? (first e))) (rest e)  (list e))] ; action
+                                    `(~i (let ~(vec (concat (when-let [vr (first b)]  `(~vr (.message ~sa)))
+                                                            (when-let [vr (second b)] `(~vr (.port ~sa)))))
+                                           ~@a))))
+                                (range) exprs))))))
 
 (defrecord ^:private FToChanExc [^Throwable exc])
 (alter-meta! #'->FToChanExc assoc :private true)
@@ -531,7 +529,7 @@
   (muxch* [_]))
 
 (defsfn mix
-   "Creates and returns a mix of one or more input channels which will
+  "Creates and returns a mix of one or more input channels which will
     be put on the supplied out channel. Input sources can be added to
     the mix with 'admix', and removed with 'unmix'. A mix supports
     soloing, muting and pausing multiple inputs atomically using
@@ -548,43 +546,43 @@
 
     :mute - muted channels will have their contents consumed but not included in the mix
     :pause - paused channels will not have their contents consumed (and thus also not included in the mix)"
-   [out]
-   (let [rp-array #(let [a (make-array ReceivePort 1)] (aset ^"[Lco.paralleluniverse.strands.channels.ReceivePort;" a 0 ^ReceivePort %) a)
-         empty-rp-array (make-array ReceivePort 0)
-         flatten-coll-map (fn [coll-map f-key f-val]
-                            (reduce-kv
-                              (fn [res coll val]
-                                (core/merge
-                                  res
-                                  (core/map
-                                    (fn [a] {(f-key a) (f-val val)})
-                                    coll)))
-                              {} coll-map))
-         to-flattened-c-state (fn [c-state-map] (flatten-coll-map c-state-map identity identity))
-         to-mix-state (fn [flattened-c-state]
-                        (Mix$State.
-                          (cond
-                            (:mute flattened-c-state) Mix$Mode/MUTE
-                            (:pause flattened-c-state) Mix$Mode/PAUSE
-                            :else Mix$Mode/NORMAL)
-                          (:solo flattened-c-state)))
-         to-mix-state-map (fn [state-map]
-                            (flatten-coll-map state-map identity #(to-mix-state (to-flattened-c-state %))))
-         solo-modes #{:mute :pause}
-         g (ReceivePortGroup. true)
-         m (p/sreify
-             Mux
-             (muxch* [_] out)
-             Mix
-             (admix* [_ ch] (.add g (rp-array ch)))
-             (unmix* [_ ch] (.remove g (rp-array ch)))
-             (unmix-all* [_] (.remove g empty-rp-array))
-             (toggle* [_ state-map] (.setState g (to-mix-state-map state-map)))
-             (solo-mode* [this mode]
-               (assert (solo-modes mode) (str "mode must be one of: " solo-modes))
-               (.setSoloEffect ^co.paralleluniverse.strands.channels.Mix this (condp mode = :mute Mix$SoloEffect/MUTE_OTHERS :pause Mix$SoloEffect/PAUSE_OTHERS))))]
-     (pipe g out)
-     m))
+  [out]
+  (let [rp-array #(let [a (make-array ReceivePort 1)] (aset ^"[Lco.paralleluniverse.strands.channels.ReceivePort;" a 0 ^ReceivePort %) a)
+        empty-rp-array (make-array ReceivePort 0)
+        flatten-coll-map (fn [coll-map f-key f-val]
+                           (reduce-kv
+                            (fn [res coll val]
+                              (clojure.core/merge
+                               res
+                               (clojure.core/map
+                                (fn [a] {(f-key a) (f-val val)})
+                                coll)))
+                            {} coll-map))
+        to-flattened-c-state (fn [c-state-map] (flatten-coll-map c-state-map identity identity))
+        to-mix-state (fn [flattened-c-state]
+                       (Mix$State.
+                        (cond
+                          (:mute flattened-c-state) Mix$Mode/MUTE
+                          (:pause flattened-c-state) Mix$Mode/PAUSE
+                          :else Mix$Mode/NORMAL)
+                        (:solo flattened-c-state)))
+        to-mix-state-map (fn [state-map]
+                           (flatten-coll-map state-map identity #(to-mix-state (to-flattened-c-state %))))
+        solo-modes #{:mute :pause}
+        g (ReceivePortGroup. true)
+        m (p/sreify
+           Mux
+           (muxch* [_] out)
+           Mix
+           (admix* [_ ch] (.add g (rp-array ch)))
+           (unmix* [_ ch] (.remove g (rp-array ch)))
+           (unmix-all* [_] (.remove g empty-rp-array))
+           (toggle* [_ state-map] (.setState g (to-mix-state-map state-map)))
+           (solo-mode* [this mode]
+                       (assert (solo-modes mode) (str "mode must be one of: " solo-modes))
+                       (.setSoloEffect ^co.paralleluniverse.strands.channels.Mix this (condp mode = :mute Mix$SoloEffect/MUTE_OTHERS :pause Mix$SoloEffect/PAUSE_OTHERS))))]
+    (pipe g out)
+    m))
 
 (defn admix
   "Adds ch as an input to the mix"
